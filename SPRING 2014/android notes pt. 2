@@ -1,0 +1,106 @@
+Android 101 App notes:
+Dialog: 
+
+	in GameAcvity.java:
+
+	**Add dialog_container, highscore_item xml 
+
+	private void showDialog(){
+		dlog = new android.app.Dialog(GameActivity.this, android.R.style.Theme_Holo_Light_Dialog_NoActionBar_MinWidth);
+        dlog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dlog.setContentView(R.layout.dialog_highscore);
+        
+        input_name = (EditText) dlog.findViewById(R.id.name_input);
+        submit_name = (Button) dlog.findViewById(R.id.name_submit);
+        submit_name.setOnClickListener(clickerListener);
+        dlog.show();
+	}
+
+	
+ 	**Update clickerListener to handle muliple cases
+	View.OnClickListener clickerListener = new View.OnClickListener() {
+		  public void onClick(View v) {
+			  switch (v.getId()){
+			  	case R.id.score:
+			  		score_num = score_num + 1;
+			  		if (score_num >= 100){
+						score.setTextSize(TypedValue.COMPLEX_UNIT_DIP,140);
+					}
+			  		score.setText("" + score_num);
+					// soundID, leftVolume, rightVolume, priority, loop, rate
+					mSounds.play(mCoinSound, 1, 1, 1, 0, 1);
+					
+					
+			  		break;
+			  	case R.id.name_submit:
+			  		String user = input_name.getText().toString();
+			  		
+			  		if( !(user.equals(""))){
+			  			finishActivity(user);
+			  		}
+			  		break;
+			  }
+		  }
+	};
+		
+	**Add message in EditText to intent
+
+	private void finishActivity(String user){
+		Intent i = getIntent();
+		i.putExtra("score", score_num);
+		i.putExtra("name", user);
+		setResult(RESULT_OK, i);
+		dlog.dismiss();
+		finish();
+		overridePendingTransition(0,R.anim.bottom_up);
+	}
+
+ListView
+	**Add 
+	**Setup listviews
+	private void setupListView(){
+		highScoreList = new ArrayList<Score>();
+		
+		adapter = new CustomHighScoreListAdapter(MenuActivity.this,
+		        R.layout.highscore_item,highScoreList);
+		highScoreListView.setAdapter(adapter);
+		adapter.notifyDataSetChanged();
+    	}
+
+	**Add username to list and update adapter
+
+	protected void onActivityResult(int requestCode, int resultCode, Intent returnIntent) {
+
+		  if (requestCode == LOGIN_REQUEST_ID) {
+		     if(resultCode == RESULT_OK){
+		         int returned_score = returnIntent.getIntExtra("score", 0); 
+		         String name = returnIntent.getStringExtra("name");
+		         Score new_score_item = new Score(name, returned_score);
+	//		 highScoreList.add(new_score_item);
+		         sortedInsert(highScoreList, new_score_item);
+
+		         max_score = returned_score;
+		         adapter.notifyDataSetChanged();
+		         
+		         
+		     }
+		     if (resultCode == RESULT_CANCELED) {    
+		         //Do Nothing
+		     }
+		}
+	}
+
+	**Use sortedInsert function to add scores in order
+	private void sortedInsert(ArrayList<Score> arr, Score item){
+		if(arr.size() == 0){
+			arr.add(item);
+		}
+		else if (arr.size() < 5){
+			for (int i = 0; i < arr.size(); i++){
+				if (item.getScoreInt() > arr.get(i).getScoreInt()){
+					arr.add(i,item);
+					break;
+				}
+			}
+		}
+	}
